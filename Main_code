@@ -1,0 +1,230 @@
+let cube = [];
+let cube_texture;
+let player;
+
+var cube_size;
+var mx=0,my=0,sun=0,xx=0,yy=0;
+var plainWidth=25, plainLenght=25;
+var seed;
+var angleX = 2.5;
+var r,g,b,gravity=1,spd=10;
+var jump_speed=0;
+
+function setup() {
+  //setup
+  createCanvas(displayWidth, displayHeight, WEBGL);
+  img = loadImage('Block_001.jpeg');
+  translate(width/2, height/2);
+  seed = round(random(1,5));
+  print(seed);
+  r=255;
+  g=255;
+  b=255;
+  
+  for (let x = 0; x < plainWidth; x++) {
+    cube[x]=[];
+  }
+  
+  cube_size=100;
+  for (let x = 1; x < plainWidth; x++) {
+    for (let z = 1; z < plainLenght; z++) {
+      cube[x][z] = new cube_plane(x,z,cube_size,seed);
+    }
+  }
+  player=new char_001(1,1,cube_size);
+  strokeWeight(5);
+  xx = round(player.x/cube_size);
+  zz = round(player.z/cube_size);
+  player.y=(cube[xx][zz].y)+cube_size;
+}
+
+function draw() {
+  background(0);
+  ambientLight(25);
+  directionalLight(r, g, b, -0.20, 0.3, 0);
+  for (let x = 1; x < plainWidth; x++) {
+    for (let z = 1; z < plainLenght; z++) {
+      cube[x][z].display();
+    }
+  }
+  xx = round(player.x/cube_size);
+  zz = round(player.z/cube_size);
+  //gr4avity
+  if(player.y>(cube[xx][zz].y)+cube_size){
+    player.y-=gravity;
+    gravity+=0.5;
+  } else {
+    gravity=1;
+  }
+  if(jump_speed>0){
+    player.y+=jump_speed;
+    jump_speed-=1;
+  }
+  
+  player.display();
+  keycheck();
+}
+
+function My_Cube(){
+}
+
+class cube_plane {
+  constructor(x,z,s,i) {
+    this.x=(x*s);
+    this.z=(z*s);
+    this.size=s;
+    this.y=(cos(x/i)*sin(z/i)*cube_size)-height/4;
+    this.r=random(100);
+  }
+  
+  display() {
+    //noStroke(0);
+    stroke(0);
+    //fill(this.x,this.z,255);
+    //fill(255-this.r,this.y*3,this.r);
+    texture(img);
+    push();
+    rotateX(angleX-((mouseY-width/2)/width));
+    rotateY((-(mouseX-width/2)/width));
+    translate(this.x+mx,this.y-player.y,this.z+my);
+    box(this.size);
+    pop();
+  }
+}
+
+class char_001 {
+  constructor(x,z,s) {
+    this.y=(cube[x][z].y)+s;
+    this.x=(x*s);
+    this.z=(z*s);
+    this.size=s;
+    //print(this.y);
+    this.r=random(100);
+  }
+
+  display() {   
+    //stroke(255);
+    noStroke(0);
+    //fill(200,250,255);
+    //fill(255-this.r,this.y*3,this.r);
+    push();
+    img.filter(INVERT);
+    rotateX(angleX-((mouseY-width/2)/width));
+    rotateY((-(mouseX-width/2)/width));
+    //texture(img.x+1);
+    //rotateZ((-(mouseX-width/2)/width));
+    translate(this.x+mx,this.y-player.y,this.z+my);
+    normalMaterial(mx);
+    sphere(this.size/2);
+    img.filter(INVERT);
+    pop();
+  }
+}
+
+function keycheck() {
+  if (keyIsDown(LEFT_ARROW) && xx>1) {
+    xx = round(player.x/cube_size);
+    zz = round(player.z/cube_size);
+    print(xx);
+    if((cube[xx-1][zz].y)<(player.y-cube_size)){
+      print("lower");
+      player.x-=spd;
+      mx+=spd;
+    } else {
+      if ((player.x/cube_size)>xx){
+        player.x-=spd;
+        mx+=spd;
+      } else {
+        player.y=(cube[xx-1][zz].y)+cube_size;
+        player.x-=spd;
+        mx+=spd;
+      }
+    }
+
+  } else if (keyIsDown(RIGHT_ARROW) && xx<plainWidth) {
+    xx = round(player.x/cube_size);
+    zz = round(player.z/cube_size);
+    print(xx);
+    if((cube[xx+1][zz].y)<(player.y-cube_size)){
+      print("lower");
+      player.x+=spd;
+      //player.y=(cube[xx][zz].y)+cube_size;
+      mx-=spd;
+    } else {
+      if ((player.x/cube_size)<xx){
+        player.x+=spd;
+        mx-=spd;
+      } else {
+        player.y=(cube[xx+1][zz].y)+cube_size;
+        player.x+=spd;
+        mx-=spd;
+      }
+    }
+  }
+  if (keyIsDown(UP_ARROW)) {
+    if((cube[xx][zz+1].y)<(player.y-cube_size)){
+      player.z+=spd;
+      //player.y=(cube[xx][zz].y)+cube_size;
+      my-=spd;
+    } else {
+      if ((player.z/cube_size)<zz){
+        player.z+=spd;
+        my-=spd;
+      } else {
+        player.y=(cube[xx][zz+1].y)+cube_size;
+        player.z+=spd;
+        my-=spd;
+      }
+    }
+  } else if (keyIsDown(DOWN_ARROW)) {
+    print(xx);
+    if((cube[xx][zz-1].y)<(player.y-cube_size)){
+      player.z-=spd;
+      //player.y=(cube[xx][zz].y)+cube_size;
+      my+=spd;
+    } else {
+      if ((player.z/cube_size)>zz){
+        player.z-=spd;
+        my+=spd;
+      } else {
+        player.y=(cube[xx][zz-1].y)+cube_size;
+        player.z-=spd;
+        my+=spd;
+      }
+    }
+  }
+}
+
+function keyPressed(){
+  if (keyCode === 32) {
+    jump_speed=32;
+  }
+}
+
+/*
+function keyReleased() {
+  if (keyCode === LEFT_ARROW){
+    if(player.x/cube_size-round(player.x/cube_size)<0.5){
+      player.x = floor(1+player.x/cube_size)*cube_size; 
+    }
+    player.x = floor(player.x/cube_size)*cube_size; 
+    player.z = floor(player.z/cube_size)*cube_size;
+    player.y=(cube[xx][zz].y)+cube_size;
+  }
+  if (keyCode === RIGHT_ARROW){
+    player.x = floor(player.x/cube_size)*cube_size; 
+    player.z = floor(player.z/cube_size)*cube_size;
+    player.y=(cube[xx][zz].y)+cube_size;
+  }
+  if (keyCode === UP_ARROW){
+    player.x = floor(player.x/cube_size)*cube_size; 
+    player.z = floor(player.z/cube_size)*cube_size;
+    player.y=(cube[xx][zz].y)+cube_size;
+  }
+  if (keyCode === DOWN_ARROW){
+    player.x = floor(player.x/cube_size)*cube_size; 
+    player.z = floor(player.z/cube_size)*cube_size;
+    player.y=(cube[xx][zz].y)+cube_size;
+  }
+}
+*/
