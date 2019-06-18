@@ -1,21 +1,26 @@
 let cube = [];
+let img = [];
 let cube_texture;
 let player;
 
 var cube_size;
 var mx=0,my=0,sun=0,xx=0,yy=0;
-var plainWidth=25, plainLenght=25;
+var daytime=-1;
+var sunspeed=true;
+var plainWidth=60, plainLenght=60;
 var seed;
 var angleX = 2.5;
 var r,g,b,gravity=1,spd=10;
 var jump_speed=0;
+var gap=0;
 
 function setup() {
   //setup
   createCanvas(displayWidth, displayHeight, WEBGL);
-  img = loadImage('Block_001.jpeg');
+  img[0] = loadImage('Block_001.jpeg');
+  img[1] = loadImage('block_002.jpg');
   translate(width/2, height/2);
-  seed = round(random(1,5));
+  seed = random(1,5);
   print(seed);
   r=255;
   g=255;
@@ -25,10 +30,13 @@ function setup() {
     cube[x]=[];
   }
   
-  cube_size=100;
+  cube_size=25;
   for (let x = 1; x < plainWidth; x++) {
     for (let z = 1; z < plainLenght; z++) {
-      cube[x][z] = new cube_plane(x,z,cube_size,seed);
+      if(round(random(seed*2))==0){
+        gap=round(random(-1,1));
+      }
+      cube[x][z] = new cube_plane(x,z,cube_size,seed,gap);
     }
   }
   player=new char_001(1,1,cube_size);
@@ -39,9 +47,21 @@ function setup() {
 }
 
 function draw() {
+  if(daytime<-4){
+    sunspeed=true;
+  } else if (daytime>4){
+    sunspeed=false;
+  }
+  if(sunspeed==true){
+    daytime+=0.007;
+  } 
+  if(sunspeed==false){
+    daytime-=0.007;
+  }
   background(0);
-  ambientLight(25);
-  directionalLight(r, g, b, -0.20, 0.3, 0);
+  ambientLight(100);
+  directionalLight(250, 250, 250, daytime, daytime, -1);
+  //directionalLight(r, g, b, daytime, daytime, -0.5);
   for (let x = 1; x < plainWidth; x++) {
     for (let z = 1; z < plainLenght; z++) {
       cube[x][z].display();
@@ -69,20 +89,21 @@ function My_Cube(){
 }
 
 class cube_plane {
-  constructor(x,z,s,i) {
+  constructor(x,z,s,i,gap) {
     this.x=(x*s);
     this.z=(z*s);
     this.size=s;
     this.y=(cos(x/i)*sin(z/i)*cube_size)-height/4;
     this.r=random(100);
+    this.t=round(random(1));
   }
   
   display() {
     //noStroke(0);
-    stroke(0);
+    //stroke(0);
     //fill(this.x,this.z,255);
     //fill(255-this.r,this.y*3,this.r);
-    texture(img);
+    texture(img[this.t]);
     push();
     rotateX(angleX-((mouseY-width/2)/width));
     rotateY((-(mouseX-width/2)/width));
@@ -98,25 +119,22 @@ class char_001 {
     this.x=(x*s);
     this.z=(z*s);
     this.size=s;
-    //print(this.y);
     this.r=random(100);
   }
 
   display() {   
     //stroke(255);
     noStroke(0);
-    //fill(200,250,255);
+    fill(200,250,255);
     //fill(255-this.r,this.y*3,this.r);
     push();
-    img.filter(INVERT);
     rotateX(angleX-((mouseY-width/2)/width));
     rotateY((-(mouseX-width/2)/width));
     //texture(img.x+1);
     //rotateZ((-(mouseX-width/2)/width));
     translate(this.x+mx,this.y-player.y,this.z+my);
-    normalMaterial(mx);
+    //normalMaterial(mx);
     sphere(this.size/2);
-    img.filter(INVERT);
     pop();
   }
 }
@@ -125,9 +143,7 @@ function keycheck() {
   if (keyIsDown(LEFT_ARROW) && xx>1) {
     xx = round(player.x/cube_size);
     zz = round(player.z/cube_size);
-    print(xx);
     if((cube[xx-1][zz].y)<(player.y-cube_size)){
-      print("lower");
       player.x-=spd;
       mx+=spd;
     } else {
@@ -141,12 +157,10 @@ function keycheck() {
       }
     }
 
-  } else if (keyIsDown(RIGHT_ARROW) && xx<plainWidth) {
+  } else if (keyIsDown(RIGHT_ARROW) && xx<plainWidth-1) {
     xx = round(player.x/cube_size);
     zz = round(player.z/cube_size);
-    print(xx);
     if((cube[xx+1][zz].y)<(player.y-cube_size)){
-      print("lower");
       player.x+=spd;
       //player.y=(cube[xx][zz].y)+cube_size;
       mx-=spd;
@@ -161,7 +175,7 @@ function keycheck() {
       }
     }
   }
-  if (keyIsDown(UP_ARROW)) {
+  if (keyIsDown(UP_ARROW) && zz<plainLenght-1) {
     if((cube[xx][zz+1].y)<(player.y-cube_size)){
       player.z+=spd;
       //player.y=(cube[xx][zz].y)+cube_size;
@@ -176,8 +190,7 @@ function keycheck() {
         my-=spd;
       }
     }
-  } else if (keyIsDown(DOWN_ARROW)) {
-    print(xx);
+  } else if (keyIsDown(DOWN_ARROW) && zz>1) {
     if((cube[xx][zz-1].y)<(player.y-cube_size)){
       player.z-=spd;
       //player.y=(cube[xx][zz].y)+cube_size;
